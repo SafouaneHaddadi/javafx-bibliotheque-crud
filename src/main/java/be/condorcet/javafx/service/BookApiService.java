@@ -24,53 +24,59 @@ public class BookApiService {
 
     private final HttpClient client = HttpClient.newHttpClient();
     private final Gson gson = new Gson();
-    private final String authHeader;
+    private final String authHeader; // null si pas de credentials -> pas d'auth envoyée
 
     public BookApiService() {
-        String username;
-        String password;
+        String username = null;
+        String password = null;
 
         try (InputStream input = getClass().getResourceAsStream("/config.properties")) {
-            if (input == null) {
-                throw new RuntimeException("Fichier config.properties non trouvé. "
-                        + "Créez-le avec api.username et api.password pour l'authentification.");
+            if (input != null) {
+                Properties prop = new Properties();
+                prop.load(input);
+                username = prop.getProperty("api.username");
+                password = prop.getProperty("api.password");
             }
-
-            Properties prop = new Properties();
-            prop.load(input);
-
-            username = prop.getProperty("api.username");
-            password = prop.getProperty("api.password");
-
-            if (username == null || username.isBlank() || password == null || password.isBlank()) {
-                throw new RuntimeException("api.username ou api.password manquant ou vide dans config.properties");
-            }
-
         } catch (Exception ex) {
-            throw new RuntimeException("Impossible de charger les credentials : " + ex.getMessage(), ex);
+            System.err.println("Erreur lecture config.properties : " + ex.getMessage());
         }
 
-        this.authHeader = "Basic " + Base64.getEncoder()
-                .encodeToString((username + ":" + password).getBytes());
+        if (username != null && !username.isBlank() && password != null && !password.isBlank()) {
+            this.authHeader = "Basic " + Base64.getEncoder()
+                    .encodeToString((username + ":" + password).getBytes());
+        } else {
+            this.authHeader = null; // pas d'auth -> GET public
+        }
     }
 
     public HttpClient getClient() {
         return client;
     }
 
-    public HttpRequest.Builder authenticatedRequest(URI uri) {
+    // Requête GET sans auth (publique)
+    private HttpRequest getPublicBooksRequest() {
         return HttpRequest.newBuilder()
+                .uri(URI.create(API_URL))
+                .GET()
+                .build();
+    }
+
+    // Requête avec auth pour POST/PUT/DELETE
+    public HttpRequest.Builder authenticatedRequest(URI uri) {
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(uri)
-                .header("Authorization", authHeader)
                 .header("Content-Type", "application/json");
+
+        if (authHeader != null) {
+            builder.header("Authorization", authHeader);
+        }
+        return builder;
     }
 
     public void loadBooksAsync(Consumer<ObservableList<Book>> onSuccess,
                                Runnable onError) {
 
-        HttpRequest request = authenticatedRequest(URI.create(API_URL))
-                .GET()
-                .build();
+        HttpRequest request = getPublicBooksRequest(); // GET public, sans auth
 
         client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(HttpResponse::body)
@@ -91,10 +97,19 @@ public class BookApiService {
                 });
     }
 
-    // Méthode pour POST/PUT/DELETE
-    public void sendAuthenticatedRequest(HttpRequest.Builder builder,
+    // Méthode pour POST/PUT/DELETE avec auth (si credentials présents)
+    public void sendAuthenticatedRequest(HttpRequest.Builder originalBuilder,
                                          Runnable onSuccess,
                                          Runnable onError) {
+        // On reconstruit la requête avec l'auth
+        HttpRequest.Builder builder = authenticatedRequest(originalBuilder.build().uri())
+                .method(originalBuilder.build().method(), 
+                        originalBuilder.build().bodyPublisher().orElse(HttpRequest.BodyPublishers.noBody()));
+
+        originalBuilder.build().headers().map().forEach((key, values) -> 
+            values.forEach(value -> builder.header(key, value))
+        );
+
         HttpRequest request = builder.build();
 
         client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
