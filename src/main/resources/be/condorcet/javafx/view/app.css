@@ -1,0 +1,85 @@
+/* Fond général et police */
+.root {
+    -fx-font-family: "Segoe UI", "Helvetica", sans-serif;
+    -fx-font-size: 14px;
+    -fx-background-color: #f8f9fa;
+}
+
+/* Titre principal */
+.label-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #212529;
+    -fx-padding: 15 0 10 20;
+}
+
+/* Panneau du formulaire */
+.form-panel {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #dee2e6;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 20;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);
+}
+
+/* Boutons */
+.button-primary {
+    -fx-background-color: #0d6efd;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8 16;
+    -fx-background-radius: 6;
+}
+
+.button-primary:hover {
+    -fx-background-color: #0b5ed7;
+}
+
+/* Messages */
+.message-error {
+    -fx-text-fill: #d63384;
+    -fx-font-weight: bold;
+}
+
+.message-success {
+    -fx-text-fill: #198754;
+    -fx-font-weight: bold;
+}
+
+.button-delete {
+    -fx-background-color: #dc3545;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 6 12;
+    -fx-background-radius: 4;
+}
+
+.button-delete:hover {
+    -fx-background-color: #c82333;
+}
+
+.button-edit {
+    -fx-background-color: #ffc107;
+    -fx-text-fill: black;
+    -fx-font-weight: bold;
+    -fx-padding: 6 12;
+    -fx-background-radius: 4;
+}
+
+.button-edit:hover {
+    -fx-background-color: #e0a800;
+}
+
+.button-add {
+    -fx-background-color: #28a745;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8 16;
+    -fx-background-radius: 6;
+}
+
+.button-add:hover {
+    -fx-background-color: #218838;
+}

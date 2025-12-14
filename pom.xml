@@ -1,0 +1,72 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>be.condorcet.javafx</groupId>
+	<artifactId>javafx-hello</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
+
+	<properties>
+		<!-- Encodage du projet -->
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+		<!-- On compile en Java 25 -->
+		<maven.compiler.release>25</maven.compiler.release>
+
+		<!-- Version JavaFX centralisée -->
+		<javafx.version>25.0.1</javafx.version>
+	</properties>
+
+	<dependencies>
+		<!-- JavaFX Controls (Boutons, Labels, etc.) -->
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-controls</artifactId>
+			<version>${javafx.version}</version>
+		</dependency>
+
+		<!-- JavaFX FXML (pour les vues déclaratives) -->
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-fxml</artifactId>
+			<version>${javafx.version}</version>
+		</dependency>
+
+<!-- JavaFX ne sait pas lire du JSON tout seul. il faut une biblio pour convertir ce texte JSON en objets Java Book
+             On utilise ici Gson  -->
+
+		<dependency>
+			<groupId>com.google.code.gson</groupId>  
+			<artifactId>gson</artifactId>
+			<version>2.10.1</version>  
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<!-- Compiler Maven : Configuration pour Java 25 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.14.1</version>
+				<configuration>
+					<release>${maven.compiler.release}</release>
+				</configuration>
+			</plugin>
+
+			<!-- Plugin JavaFX officiel -->
+			<plugin>
+				<groupId>org.openjfx</groupId>
+				<artifactId>javafx-maven-plugin</artifactId>
+				<version>0.0.8</version>
+				<configuration>
+					<!-- Classe principale de l'application -->
+					<!-- ATTENTION : Doit correspondre à votre package -->
+					<mainClass>be.condorcet.javafx.App</mainClass>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>
