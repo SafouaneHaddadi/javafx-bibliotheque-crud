@@ -33,6 +33,7 @@ public class BookCatalogController {
     @FXML private TextField isbnField;
     @FXML private Button addButton;
     @FXML private Label messageLabel;
+    @FXML private TextField genreField;
 
     private final BookApiService apiService = new BookApiService();
     private final Gson gson = new Gson();
@@ -87,16 +88,18 @@ public class BookCatalogController {
     private void addBook() {
         String title = titleField.getText().trim();
         String author = authorField.getText().trim();
+        String genre = genreField.getText().trim();
 
-        if (title.isEmpty() || author.isEmpty()) {
-            showError("Titre et auteur obligatoires");
-            return;
-        }
+        if (title.isEmpty() || author.isEmpty() || genre.isEmpty()) {
+        showError("Titre, auteur et genre sont obligatoires");
+        return;
+    }
 
         Book newBook = new Book();
         newBook.setTitle(title);
         newBook.setAuthor(author);
         newBook.setIsbn(isbnField.getText().trim());
+        newBook.setGenre(genre);
         newBook.setImageUrl(DEFAULT_IMAGE_URL);
 
         String json = gson.toJson(newBook);

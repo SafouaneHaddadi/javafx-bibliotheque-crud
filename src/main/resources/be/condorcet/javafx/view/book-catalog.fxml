@@ -7,16 +7,13 @@
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="be.condorcet.javafx.view.BookCatalogController">
-
     <top>
         <Label text="Ma Bibliothèque – Livres disponibles" fx:id="titleLabel"
                styleClass="label-title"/>
     </top>
-
     <center>
         <ListView fx:id="bookListView" prefWidth="500.0"/>
     </center>
-
     <right>
         <VBox spacing="10.0" styleClass="form-panel">
             <padding>
@@ -24,13 +21,13 @@
             </padding>
             <children>
                 <Label text="Ajouter un livre"/>
-                <TextField fx:id="titleField" promptText="Titre"/>
-                <TextField fx:id="authorField" promptText="Auteur"/>
+                <TextField fx:id="titleField" promptText="Titre *"/>
+                <TextField fx:id="authorField" promptText="Auteur *"/>
                 <TextField fx:id="isbnField" promptText="ISBN (optionnel)"/>
+                <TextField fx:id="genreField" promptText="Genre (ex: Roman, Policier, SF...) *"/>
                 <Button fx:id="addButton" text="Ajouter" styleClass="button-primary" onAction="#addBook"/>
                 <Label fx:id="messageLabel" text=""/>
             </children>
         </VBox>
     </right>
-
 </BorderPane>
