@@ -12,14 +12,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -35,15 +28,30 @@ public class BookCatalogController {
     @FXML private TextField authorField;
     @FXML private TextField isbnField;
     @FXML private TextField genreField;
-    @FXML private TextField imageUrlField;  // Nouveau champ pour l'ajout
-    @FXML private TextArea synopsisArea;    // Nouveau champ pour l'ajout
+    @FXML private TextField imageUrlField;
+    @FXML private TextArea synopsisArea;
     @FXML private Button addButton;
     @FXML private Label messageLabel;
 
-    private final BookApiService apiService = new BookApiService();
+    private BookApiService apiService;
     private final Gson gson = new Gson();
 
     private static final String PLACEHOLDER_IMAGE = "https://via.placeholder.com/300x450?text=No+Image";
+
+    public void setApiService(BookApiService apiService) {
+        this.apiService = apiService;
+    }
+
+    public void loadBooksAfterLogin() {
+        messageLabel.setText("Chargement des livres...");
+        apiService.loadBooksAsync(
+            books -> {
+                bookListView.setItems(books);
+                showSuccess("Livres chargés ! (" + books.size() + " livres)");
+            },
+            () -> showError("Erreur de connexion à l'API")
+        );
+    }
 
     @FXML
     public void initialize() {
@@ -82,22 +90,19 @@ public class BookCatalogController {
                     setText(null);
                     setGraphic(null);
                 } else {
-                    // Image (avec placeholder si vide)
-                    String imgUrl = book.getImageUrl() != null && !book.getImageUrl().isBlank() 
-                            ? book.getImageUrl() 
+                    String imgUrl = book.getImageUrl() != null && !book.getImageUrl().isBlank()
+                            ? book.getImageUrl()
                             : PLACEHOLDER_IMAGE;
                     Image image = new Image(imgUrl, true);
                     imageView.setImage(image);
 
-                    // Infos
                     titleLabel.setText(book.getTitle());
                     authorLabel.setText("par " + book.getAuthor());
                     genreLabel.setText("Genre : " + book.getGenre());
-                    synopsisLabel.setText(book.getSynopsis() != null && !book.getSynopsis().isBlank() 
-                            ? book.getSynopsis() 
+                    synopsisLabel.setText(book.getSynopsis() != null && !book.getSynopsis().isBlank()
+                            ? book.getSynopsis()
                             : "Aucun synopsis disponible");
 
-                    // Boutons
                     editBtn.setOnAction(e -> openEditDialog(book));
                     deleteBtn.setOnAction(e -> confirmAndDelete(book));
 
@@ -116,18 +121,6 @@ public class BookCatalogController {
                 }
             }
         });
-
-        loadBooks();
-    }
-
-    private void loadBooks() {
-        apiService.loadBooksAsync(
-            books -> {
-                bookListView.setItems(books);
-                showSuccess("Livres chargés depuis Spring Boot ! (" + books.size() + " livres)");
-            },
-            () -> showError("Erreur de connexion à l'API")
-        );
     }
 
     // AJOUT
@@ -153,7 +146,7 @@ public class BookCatalogController {
 
         String json = gson.toJson(newBook);
 
-        var request = apiService.authenticatedRequest(URI.create("http://localhost:8082/api/books"))
+        var request = apiService.authenticatedRequest("/api/books")
                 .POST(HttpRequest.BodyPublishers.ofString(json))
                 .build();
 
@@ -162,7 +155,7 @@ public class BookCatalogController {
                     if (resp.statusCode() >= 200 && resp.statusCode() < 300) {
                         showSuccess("Livre ajouté !");
                         clearAddFields();
-                        loadBooks();
+                        loadBooksAfterLogin();
                     } else {
                         showError("Erreur ajout : " + resp.statusCode());
                     }
@@ -229,7 +222,7 @@ public class BookCatalogController {
     private void updateBook(Book book, Stage dialog) {
         String json = gson.toJson(book);
 
-        var request = apiService.authenticatedRequest(URI.create("http://localhost:8082/api/books/" + book.getId()))
+        var request = apiService.authenticatedRequest("/api/books/" + book.getId())
                 .PUT(HttpRequest.BodyPublishers.ofString(json))
                 .build();
 
@@ -237,7 +230,7 @@ public class BookCatalogController {
                 .thenAccept(resp -> Platform.runLater(() -> {
                     if (resp.statusCode() == 200) {
                         showSuccess("Livre modifié !");
-                        loadBooks();
+                        loadBooksAfterLogin();
                         dialog.close();
                     } else {
                         showError("Erreur modification : " + resp.statusCode());
@@ -249,7 +242,7 @@ public class BookCatalogController {
                 });
     }
 
-    // SUPPRESSION (inchangée)
+    // SUPPRESSION
     private void confirmAndDelete(Book book) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Supprimer");
@@ -260,7 +253,7 @@ public class BookCatalogController {
     }
 
     private void deleteBook(Long id) {
-        var request = apiService.authenticatedRequest(URI.create("http://localhost:8082/api/books/" + id))
+        var request = apiService.authenticatedRequest("/api/books/" + id)
                 .DELETE()
                 .build();
 
@@ -268,7 +261,7 @@ public class BookCatalogController {
                 .thenAccept(resp -> Platform.runLater(() -> {
                     if (resp.statusCode() == 204 || resp.statusCode() == 200) {
                         showSuccess("Livre supprimé !");
-                        loadBooks();
+                        loadBooksAfterLogin();
                     } else {
                         showError("Erreur suppression : " + resp.statusCode());
                     }
