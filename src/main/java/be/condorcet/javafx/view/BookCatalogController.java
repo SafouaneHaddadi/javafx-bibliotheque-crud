@@ -152,7 +152,9 @@ public class BookCatalogController {
 
         apiService.getClient().sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenAccept(resp -> Platform.runLater(() -> {
-                    if (resp.statusCode() >= 200 && resp.statusCode() < 300) {
+                    if (resp.statusCode() == 401) {
+                        showUnauthorizedError();
+                    } else if (resp.statusCode() >= 200 && resp.statusCode() < 300) {
                         showSuccess("Livre ajouté !");
                         clearAddFields();
                         loadBooksAfterLogin();
@@ -173,6 +175,10 @@ public class BookCatalogController {
         genreField.clear();
         synopsisArea.clear();
         imageUrlField.clear();
+    }
+
+    private void showUnauthorizedError() {
+        showError("Vous n'êtes pas autorisé à effectuer cette action (identifiants incorrects ou insuffisants).");
     }
 
     // MODIFICATION
@@ -228,7 +234,9 @@ public class BookCatalogController {
 
         apiService.getClient().sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenAccept(resp -> Platform.runLater(() -> {
-                    if (resp.statusCode() == 200) {
+                    if (resp.statusCode() == 401) {
+                        showUnauthorizedError();
+                    } else if (resp.statusCode() == 200) {
                         showSuccess("Livre modifié !");
                         loadBooksAfterLogin();
                         dialog.close();
@@ -259,7 +267,9 @@ public class BookCatalogController {
 
         apiService.getClient().sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenAccept(resp -> Platform.runLater(() -> {
-                    if (resp.statusCode() == 204 || resp.statusCode() == 200) {
+                    if (resp.statusCode() == 401) {
+                        showUnauthorizedError();
+                    } else if (resp.statusCode() == 204 || resp.statusCode() == 200) {
                         showSuccess("Livre supprimé !");
                         loadBooksAfterLogin();
                     } else {
