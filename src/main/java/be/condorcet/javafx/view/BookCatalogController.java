@@ -6,6 +6,7 @@ import java.net.http.HttpResponse;
 
 import com.google.gson.Gson;
 
+import be.condorcet.javafx.App;
 import be.condorcet.javafx.model.Book;
 import be.condorcet.javafx.service.BookApiService;
 import javafx.application.Platform;
@@ -293,4 +294,18 @@ public class BookCatalogController {
         messageLabel.getStyleClass().add("message-error");
         messageLabel.setText(text);
     }
+
+    @FXML
+    private void logout() {
+    // Ferme la fenêtre principale
+    Stage stage = (Stage) bookListView.getScene().getWindow();
+    stage.close();
+
+    // Relance le login (via la classe principale)
+    try {
+        new App().start(new Stage());
+    } catch (Exception ex) {
+        ex.printStackTrace();
+    }
+}
 }

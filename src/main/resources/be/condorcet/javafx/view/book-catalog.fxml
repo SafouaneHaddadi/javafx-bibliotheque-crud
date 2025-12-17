@@ -8,12 +8,19 @@
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="be.condorcet.javafx.view.BookCatalogController">
     <top>
-        <Label text="Ma Bibliothèque – Livres disponibles" fx:id="titleLabel"
-               styleClass="label-title"/>
-    </top>
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <children>
+            <Label text="Ma Bibliothèque – Livres disponibles" fx:id="titleLabel"
+                   styleClass="label-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="Se déconnecter" onAction="#logout" styleClass="button-delete"/>
+        </children>
+    </HBox>
+</top>
     <center>
         <ListView fx:id="bookListView" prefWidth="500.0"/>
     </center>
+    
     <right>
         <VBox spacing="10.0" styleClass="form-panel">
             <padding>
