@@ -104,7 +104,7 @@ public class BookCatalogController {
 
         String json = gson.toJson(newBook);
 
-        var request = apiService.authenticatedRequest(URI.create("http://host.docker.internal:8082/api/books"))
+        var request = apiService.authenticatedRequest(URI.create("http://localhost:8082/api/books"))
                 .POST(HttpRequest.BodyPublishers.ofString(json))
                 .build();
 
@@ -166,7 +166,7 @@ public class BookCatalogController {
     private void updateBook(Book book, Stage dialog) {
         String json = gson.toJson(book);
 
-        var request = apiService.authenticatedRequest(URI.create("http://host.docker.internal:8082/api/books/" + book.getId()))
+        var request = apiService.authenticatedRequest(URI.create("http://localhost:8082/api/books/" + book.getId()))
                 .PUT(HttpRequest.BodyPublishers.ofString(json))
                 .build();
 
@@ -198,7 +198,7 @@ public class BookCatalogController {
     }
 
     private void deleteBook(Long id) {
-        var request = apiService.authenticatedRequest(URI.create("http://host.docker.internal:8082/api/books/" + id))
+        var request = apiService.authenticatedRequest(URI.create("http://localhost:8082/api/books/" + id))
                 .DELETE()
                 .build();
 

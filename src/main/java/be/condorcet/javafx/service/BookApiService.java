@@ -20,7 +20,7 @@ import javafx.collections.ObservableList;
 
 public class BookApiService {
 
-    private static final String API_URL = "http://host.docker.internal:8082/api/books";
+   private static final String API_URL = "http://localhost:8082/api/books";
 
     private final HttpClient client = HttpClient.newHttpClient();
     private final Gson gson = new Gson();
