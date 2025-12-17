@@ -25,6 +25,8 @@
                 <TextField fx:id="authorField" promptText="Auteur *"/>
                 <TextField fx:id="isbnField" promptText="ISBN (optionnel)"/>
                 <TextField fx:id="genreField" promptText="Genre (ex: Roman, Policier, SF...) *"/>
+                <TextArea fx:id="synopsisArea" promptText="Synopsis (optionnel)" prefRowCount="4" wrapText="true"/>
+                <TextField fx:id="imageUrlField" promptText="URL de l'image (optionnel)"/>
                 <Button fx:id="addButton" text="Ajouter" styleClass="button-primary" onAction="#addBook"/>
                 <Label fx:id="messageLabel" text=""/>
             </children>

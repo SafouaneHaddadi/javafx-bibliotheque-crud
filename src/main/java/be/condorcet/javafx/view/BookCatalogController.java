@@ -18,7 +18,10 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
@@ -31,19 +34,46 @@ public class BookCatalogController {
     @FXML private TextField titleField;
     @FXML private TextField authorField;
     @FXML private TextField isbnField;
+    @FXML private TextField genreField;
+    @FXML private TextField imageUrlField;  // Nouveau champ pour l'ajout
+    @FXML private TextArea synopsisArea;    // Nouveau champ pour l'ajout
     @FXML private Button addButton;
     @FXML private Label messageLabel;
-    @FXML private TextField genreField;
 
     private final BookApiService apiService = new BookApiService();
     private final Gson gson = new Gson();
-    private static final String DEFAULT_IMAGE_URL = "https://via.placeholder.com/300x450?text=No+Image";
+
+    private static final String PLACEHOLDER_IMAGE = "https://via.placeholder.com/300x450?text=No+Image";
 
     @FXML
     public void initialize() {
         messageLabel.setText("Chargement des livres...");
 
         bookListView.setCellFactory(lv -> new ListCell<Book>() {
+            private final ImageView imageView = new ImageView();
+            private final Label titleLabel = new Label();
+            private final Label authorLabel = new Label();
+            private final Label genreLabel = new Label();
+            private final Label synopsisLabel = new Label();
+            private final Button editBtn = new Button("Modifier");
+            private final Button deleteBtn = new Button("Supprimer");
+
+            {
+                imageView.setFitHeight(120);
+                imageView.setFitWidth(80);
+                imageView.setPreserveRatio(true);
+
+                titleLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 16;");
+                authorLabel.setStyle("-fx-font-style: italic; -fx-font-size: 13;");
+                genreLabel.setStyle("-fx-font-size: 12;");
+                synopsisLabel.setStyle("-fx-font-size: 12; -fx-text-fill: #555;");
+                synopsisLabel.setWrapText(true);
+                synopsisLabel.setPrefHeight(60);
+
+                editBtn.getStyleClass().add("button-edit");
+                deleteBtn.getStyleClass().add("button-delete");
+            }
+
             @Override
             protected void updateItem(Book book, boolean empty) {
                 super.updateItem(book, empty);
@@ -52,20 +82,37 @@ public class BookCatalogController {
                     setText(null);
                     setGraphic(null);
                 } else {
-                    Label label = new Label(book.toString());
-                    label.setPrefWidth(400);
+                    // Image (avec placeholder si vide)
+                    String imgUrl = book.getImageUrl() != null && !book.getImageUrl().isBlank() 
+                            ? book.getImageUrl() 
+                            : PLACEHOLDER_IMAGE;
+                    Image image = new Image(imgUrl, true);
+                    imageView.setImage(image);
 
-                    Button editBtn = new Button("Modifier");
-                    editBtn.getStyleClass().add("button-edit");
+                    // Infos
+                    titleLabel.setText(book.getTitle());
+                    authorLabel.setText("par " + book.getAuthor());
+                    genreLabel.setText("Genre : " + book.getGenre());
+                    synopsisLabel.setText(book.getSynopsis() != null && !book.getSynopsis().isBlank() 
+                            ? book.getSynopsis() 
+                            : "Aucun synopsis disponible");
+
+                    // Boutons
                     editBtn.setOnAction(e -> openEditDialog(book));
-
-                    Button deleteBtn = new Button("Supprimer");
-                    deleteBtn.getStyleClass().add("button-delete");
                     deleteBtn.setOnAction(e -> confirmAndDelete(book));
 
-                    HBox hbox = new HBox(15, label, editBtn, deleteBtn);
-                    hbox.setStyle("-fx-alignment: center-left; -fx-padding: 8;");
-                    setGraphic(hbox);
+                    VBox infoBox = new VBox(5, titleLabel, authorLabel, genreLabel, synopsisLabel);
+                    infoBox.setPrefWidth(400);
+
+                    HBox buttonsBox = new HBox(10, editBtn, deleteBtn);
+
+                    VBox rightBox = new VBox(15, infoBox, buttonsBox);
+
+                    HBox mainBox = new HBox(20, imageView, rightBox);
+                    mainBox.setPadding(new Insets(10));
+                    mainBox.setStyle("-fx-background-color: #f9f9f9; -fx-border-color: #ddd; -fx-border-radius: 5;");
+
+                    setGraphic(mainBox);
                 }
             }
         });
@@ -77,7 +124,7 @@ public class BookCatalogController {
         apiService.loadBooksAsync(
             books -> {
                 bookListView.setItems(books);
-                showSuccess("Livres chargés depuis Spring Boot !");
+                showSuccess("Livres chargés depuis Spring Boot ! (" + books.size() + " livres)");
             },
             () -> showError("Erreur de connexion à l'API")
         );
@@ -91,16 +138,18 @@ public class BookCatalogController {
         String genre = genreField.getText().trim();
 
         if (title.isEmpty() || author.isEmpty() || genre.isEmpty()) {
-        showError("Titre, auteur et genre sont obligatoires");
-        return;
-    }
+            showError("Titre, auteur et genre sont obligatoires");
+            return;
+        }
 
         Book newBook = new Book();
         newBook.setTitle(title);
         newBook.setAuthor(author);
         newBook.setIsbn(isbnField.getText().trim());
         newBook.setGenre(genre);
-        newBook.setImageUrl(DEFAULT_IMAGE_URL);
+        newBook.setSynopsis(synopsisArea.getText().trim());
+        String imageUrl = imageUrlField.getText().trim();
+        newBook.setImageUrl(imageUrl.isEmpty() ? PLACEHOLDER_IMAGE : imageUrl);
 
         String json = gson.toJson(newBook);
 
@@ -112,9 +161,7 @@ public class BookCatalogController {
                 .thenAccept(resp -> Platform.runLater(() -> {
                     if (resp.statusCode() >= 200 && resp.statusCode() < 300) {
                         showSuccess("Livre ajouté !");
-                        titleField.clear();
-                        authorField.clear();
-                        isbnField.clear();
+                        clearAddFields();
                         loadBooks();
                     } else {
                         showError("Erreur ajout : " + resp.statusCode());
@@ -124,6 +171,15 @@ public class BookCatalogController {
                     Platform.runLater(() -> showError("Erreur réseau : " + ex.getMessage()));
                     return null;
                 });
+    }
+
+    private void clearAddFields() {
+        titleField.clear();
+        authorField.clear();
+        isbnField.clear();
+        genreField.clear();
+        synopsisArea.clear();
+        imageUrlField.clear();
     }
 
     // MODIFICATION
@@ -136,6 +192,11 @@ public class BookCatalogController {
         TextField titleField = new TextField(book.getTitle());
         TextField authorField = new TextField(book.getAuthor());
         TextField isbnField = new TextField(book.getIsbn() != null ? book.getIsbn() : "");
+        TextField genreField = new TextField(book.getGenre() != null ? book.getGenre() : "");
+        TextArea synopsisArea = new TextArea(book.getSynopsis() != null ? book.getSynopsis() : "");
+        synopsisArea.setWrapText(true);
+        synopsisArea.setPrefRowCount(5);
+        TextField imageUrlField = new TextField(book.getImageUrl() != null ? book.getImageUrl() : "");
 
         Button saveBtn = new Button("Sauvegarder");
         saveBtn.getStyleClass().add("button-primary");
@@ -143,10 +204,10 @@ public class BookCatalogController {
             book.setTitle(titleField.getText().trim());
             book.setAuthor(authorField.getText().trim());
             book.setIsbn(isbnField.getText().trim());
-
-            if (book.getImageUrl() == null || book.getImageUrl().isEmpty()) {
-                book.setImageUrl(DEFAULT_IMAGE_URL);
-            }
+            book.setGenre(genreField.getText().trim());
+            book.setSynopsis(synopsisArea.getText().trim());
+            String imageUrl = imageUrlField.getText().trim();
+            book.setImageUrl(imageUrl.isEmpty() ? PLACEHOLDER_IMAGE : imageUrl);
 
             updateBook(book, dialog);
         });
@@ -155,11 +216,13 @@ public class BookCatalogController {
             new Label("Titre :"), titleField,
             new Label("Auteur :"), authorField,
             new Label("ISBN :"), isbnField,
+            new Label("Genre :"), genreField,
+            new Label("Synopsis :"), synopsisArea,
+            new Label("URL Image :"), imageUrlField,
             saveBtn
         );
         vbox.setPadding(new Insets(20));
-
-        dialog.setScene(new Scene(vbox, 400, 250));
+        dialog.setScene(new Scene(vbox, 550, 500));
         dialog.show();
     }
 
@@ -186,12 +249,11 @@ public class BookCatalogController {
                 });
     }
 
-    // SUPPRESSION
+    // SUPPRESSION (inchangée)
     private void confirmAndDelete(Book book) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Supprimer");
         alert.setContentText("Supprimer " + book.getTitle() + " ?");
-
         if (alert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
             deleteBook(book.getId());
         }
